@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "libAux.h"
+#include<stdio.h>
+#include<stdlib.h>
+#include"libAux.h"
 
-/* 
+/*
 Função que aloca um matriz
 Parametros:
     n: Ordem da matriz
@@ -115,10 +115,10 @@ void printLinearSystem(int n, double **A, double *b)
     {
         for(int j = 0; j < n; j++)
             printf("%lf\t ", A[i][j]);
+        printf(" = ");
         printf("\t%lf\n", b[i]);
     }
 }
-
 
 /*
 Função que imprime os elementos de um vetor
@@ -129,9 +129,35 @@ Parametros:
 void printVector(int n, double *x)
 {
     /* Imprime a matriz */
+    // for(int i = 0; i < n; i++)
+        // printf("x[%d] = %lf\n", i, x[i]);
+    printf("[ ");
     for(int i = 0; i < n; i++)
-        printf("x[%d] = %lf\n", i, x[i]);
+        printf("%lf ", x[i]);  
+    printf("]\n");
 }
+
+
+void residualVector(double **A, double *b, double *x, double *r, unsigned int n)
+{
+    /* Calcula o vetor residual */
+    // for(int i = 0; i < n; i++)
+    // {
+    //     r[i] = b[i];
+    //     for(int j = 0; j < n; j++)
+    //         r[i] = r[i] - A[i][j]*x[j];
+    // }
+    double soma = 0.00;
+    for(int i = 0; i < n; i++)
+    {
+        for(int j = 0; j < n; j++)
+            soma = soma + A[i][j]*x[j];
+        soma = soma - b[i];
+        r[i] = soma;
+    }
+}
+
+
 /*
 Função que resolve sistemas triangulares superiores
 Parametros:
@@ -177,7 +203,7 @@ Parametros:
     A: Matriz
     l: Linha atual
 */
-unsigned int findMax(double **A, unsigned int l)
+unsigned int findMax(double **A, unsigned int l, unsigned int n)
 {
     /* Considera o primeiro termo como o maior */
     double max = A[l][l];
@@ -186,7 +212,7 @@ unsigned int findMax(double **A, unsigned int l)
     unsigned int lPivo = l;
 
     /* Procura por um pivô maior */
-    for(int i = l+1; i < l+3 ; i++)
+    for(int i = l+1; i < n ; i++)
     {
         if( A[i][l] > max )
         {
@@ -202,9 +228,7 @@ unsigned int findMax(double **A, unsigned int l)
 /*
 Função que aplica a Eliminação-Gaussiana com pivoteamento parcial
 Parametros:
-    A: MatrizPara cada linha  do pivô, dividir todos os  coeficientes pelo pivô  (que fica com o valor 1)
-Proceder com  a eliminação,  zerando a coluna  do pivô,  sem fazer pivoteamento.
-Completada   a  triangularização,   calcular  as   incógnitas  por retro-substituição.
+    A: Matriz
     b: Vetor de termos independentes
     n: Ordem da matriz
 */ 
@@ -214,7 +238,7 @@ void classicEliminationWithPivot(double **A, double *b, unsigned int n)
     for(int l = 0; l < n ; l++)
     {
          /* Pivoteamento parcial */
-        unsigned int lPivot = findMax(A,l);
+        unsigned int lPivot = findMax(A,l,n);
         if( l != lPivot )
             swapLines(A,b,l,lPivot);
         
@@ -277,11 +301,13 @@ void alternativeFormOfElimination(double **A, double *b, unsigned int n)
     /* Inicia na primeira linha e primeira coluna */
     for(int l = 0; l <n ; l++)
     {    
+        double pivo = A[l][l];
+
         /* Divide cada elemento da linha do pivô, pelo pivô */
         for(int i = 0; i < n; i++)
-        {
-            A[l][i] = A[l][i] / A[l][l];
-        }
+            A[l][i] = A[l][i] / pivo;
+        b[l] = b[l] / pivo;   
+        
         /* Vai para a próxima linha */
         for(int i = l+1; i < n; i++)
         {

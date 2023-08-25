@@ -50,17 +50,27 @@ Parametros:
 */
 void printLinearSystem(int n, double **A, double *b);
 
+/*
+Função que imprime os elementos de um vetor
+Parametros: 
+    n: Ordem da matriz
+    x: Vetor
+*/
+void printVector(int n, double *x);
+
+void residualVector(double **A, double *b, double *x, double *r, unsigned int n);
+
 /* Resolver o sistema linear */
 void retroSubstituion(double **A, double *b, double *x, unsigned int n);
 
 /* Calcula a forma clássica com o pivo */
-void classicEliminationWithPivot();
+void classicEliminationWithPivot(double **A, double *b, unsigned int n);
 
 /* Calcula a forma clássica sem o pivo */
-void classicEliminationWithoutPivot();
+void classicEliminationWithoutPivot(double **A, double *b, unsigned int n);
 
 /*  > Para cada linha  do pivô, dividir todos os  coeficientes pelo pivô  (que fica com o valor 1)
     > Proceder com  a eliminação,  zerando a coluna  do pivô,  sem fazer pivoteamento.
     > Completada   a  triangularização,   calcular  as   incógnitas  por retro-substituição.
 */
-void alternativeFormOfElimination();
+void alternativeFormOfElimination(double **A, double *b, unsigned int n);
