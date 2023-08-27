@@ -58,6 +58,8 @@ Parametros:
 */
 void printVector(int n, double *x);
 
+void copyLinearSystem(double **A, double *b);
+
 void residualVector(double **A, double *b, double *x, double *r, unsigned int n);
 
 /* Resolver o sistema linear */
@@ -67,7 +69,7 @@ void retroSubstituion(double **A, double *b, double *x, unsigned int n);
 void classicEliminationWithPivot(double **A, double *b, unsigned int n);
 
 /* Calcula a forma clássica sem o pivo */
-void classicEliminationWithoutPivot(double **A, double *b, unsigned int n);
+void classicEliminationWithoutMult(double **A, double *b, unsigned int n);
 
 /*  > Para cada linha  do pivô, dividir todos os  coeficientes pelo pivô  (que fica com o valor 1)
     > Proceder com  a eliminação,  zerando a coluna  do pivô,  sem fazer pivoteamento.

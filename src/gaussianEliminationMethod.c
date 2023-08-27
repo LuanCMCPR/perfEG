@@ -23,6 +23,7 @@ int main()
     /* Aloca o vetor r */
     r = (double*) malloc(n*sizeof(double));
 
+
     // printf("Digite os elementos da matriz: \n");   
     /* Lê a matriz */
     readLinearSystem(n, A, b);
@@ -31,50 +32,43 @@ int main()
     /* Imprime o sistema linear */
     printLinearSystem(n, A, b);
 
+
     /***** Forma clássica com pivo *****/
-    printf("\nForma clássica com pivo: \n");
-    s = clock();
-    classicEliminationWithPivot(A, b, n);
-    e = clock();
-    /* Resolve o sistema triangular */
-    retroSubstituion(A, b, x, n);
-    /* Imprime o vetor solução */
-    printf("Solução: \n");
-    printVector(n, x);
-    /* Calcula o vetor residual */
-    printf("Resíduo: \n");
-    residualVector(A, b, x, r, n);
-    /* Imprime o vetor residual */
-    printVector(n, r);
-    /* Imprime o tempo de execução */
-    printf("Tempo de execução (ms): %lf\n", (double)(e-s)/CLOCKS_PER_SEC);
+    // printf("\nForma clássica com pivo: \n");
+    // classicEliminationWithPivot(A, b, n);
+    // /* Resolve o sistema triangular superior */
+    // retroSubstituion(A, b, x, n);
+    // /* Imprime o vetor solução */
+    // printf("Solução: \n");
+    // printVector(n, x);
+    // /* Calcula o vetor residual */
+    // printf("Resíduo: \n");
+    // residualVector(A, b, x, r, n);
+    // /* Imprime o vetor residual */
+    // printVector(n, r);
+
 
     
-    /***** Forma clássica sem pivo *****/
-    printf("\nForma clássica sem pivo: \n");
-    s = clock();
-    classicEliminationWithoutPivot(A, b, n);
-    e = clock();
-    /* Resolve o sistema triangular */
-    retroSubstituion(A, b, x, n);
-    /* Imprime o vetor solução */
-    printf("Solução: \n");
-    printVector(n, x);
-    /* Calcula o vetor residual */
-    printf("Resíduo: \n");
-    residualVector(A, b, x, r, n);
-    /* Imprime o vetor residual */
-    printVector(n, r);
-    /* Imprime o tempo de execução */
-    printf("Tempo de execução (ms): %lf\n", (double)(e-s)/CLOCKS_PER_SEC);
+    /***** Forma clássica com pivo e sem multiplicador *****/
+    // printf("\nForma clássica com pivo e sem multiplicador: \n");
+    // classicEliminationWithoutMult(A, b, n);
+    // /* Resolve o sistema triangular superior */
+    // retroSubstituion(A, b, x, n);
+    // /* Imprime o vetor solução */
+    // printf("Solução: \n");
+    // printVector(n, x);
+    // /* Calcula o vetor residual */
+    // printf("Resíduo: \n");
+    // residualVector(A, b, x, r, n);
+    // /* Imprime o vetor residual */
+    // printVector(n, r);
 
-    
+
+
     /***** Forma alternativa *****/
     printf("\nForma alternativa de eliminação: \n");
-    s = clock();
     alternativeFormOfElimination(A, b, n);
-    e = clock();
-    /* Resolve o sistema triangular */
+    /* Resolve o sistema triangular superior */
     retroSubstituion(A, b, x, n);
     /* Imprime o vetor solução */
     printf("Solução: \n");
@@ -84,8 +78,6 @@ int main()
     residualVector(A, b, x, r, n);
     /* Imprime o vetor residual */
     printVector(n, r);
-    /* Imprime o tempo de execução */
-    printf("Tempo de execução (ms): %lf\n", (double)(e-s)/CLOCKS_PER_SEC);
 
     free(x);
     free(b);

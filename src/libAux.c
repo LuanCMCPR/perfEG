@@ -184,6 +184,14 @@ void retroSubstituion(double **A, double *b, double *x, unsigned int n)
     }
 }
 
+/*
+Função que faz a troca de duas linhas de um sistema linear
+Parametros:
+    A: Matriz
+    b: Vetor de termos independentes
+    l1: Linha 1
+    l2: Linha 2
+*/
 void swapLines(double **A, double *b, unsigned int l1, unsigned int l2)
 {
     /* Troca as linhas da matriz */
@@ -235,27 +243,27 @@ Parametros:
 void classicEliminationWithPivot(double **A, double *b, unsigned int n)
 {
     /* Inicia na primeira linha e primeira coluna */
-    for(int l = 0; l < n ; l++)
+    for(int i = 0; i < n ; ++i)
     {
          /* Pivoteamento parcial */
-        unsigned int lPivot = findMax(A,l,n);
-        if( l != lPivot )
-            swapLines(A,b,l,lPivot);
+        unsigned int iPivot = findMax(A,i,n);
+        if( i != iPivot )
+            swapLines(A,b,i,iPivot);
         
         /* Vai para a próxima linha */
-        for(int i = l+1; i < n; i++)
+        for(int k = i+1; k < n; k++)
         {
             /* Calcula o multiplicador */
-            double m = A[i][l] / A[l][l];
+            double m = A[k][i] / A[i][i];
 
-            /* Para garantir que o elemento será zero */
-            A[i][l] = 0.0;
+            /* Para garantir que o elemento abaixo do pivo será zero */
+            A[k][i] = 0.0;
 
             /* Subtrai de cada elemento da equação a multiplicação
              * desde elemento com o multiplicador calculado */
-            for(int j = l+1; j < n; j++)
-                A[i][j] = A[i][j] - m*A[l][j];
-            b[i] = b[i] - m*b[l];
+            for(int j = i+1; j < n; ++j)
+                A[k][j] = A[k][j] - m*A[i][j];
+            b[k] = b[k] - m*b[i];
         }
     }
 }
@@ -267,29 +275,25 @@ Parametros:
     b: Vetor de termos independentes
     n: Ordem da matriz
 */
-void classicEliminationWithoutPivot(double **A, double *b, unsigned int n)
+void classicEliminationWithoutMult(double **A, double *b, unsigned int n)
 {
     /* Inicia na primeira linha e primeira coluna */
-    for(int l = 0; l <n ; l++)
-    {    
+    for(int i = 0; i < n ; ++i)
+    {
+         /* Pivoteamento parcial */
+        // unsigned int iPivot = findMax(A,i,n);
+        // if( i != iPivot )
+            // swapLines(A,b,i,iPivot);
+        
         /* Vai para a próxima linha */
-        for(int i = l+1; i < n; i++)
+        for(int k = i+1; k < n; ++k)
         {
-            /* Calcula o multiplicador */
-            double m = A[i][l] / A[l][l];
-            
-            /* Para garantir que o elemento será zero */
-            A[i][l] = 0.0;
-
-            /* Subtrai de cada elemento da equação a multiplicação
-             * desde elemento com o multiplicador calculado */
-            for(int j = l+1; j < n; j++)
-                A[i][j] = A[i][j] - m*A[l][j];
-            b[i] = b[i] - m*b[l];
+            for(int j = i+1; j < n; ++j)
+                A[k][j] = A[k][j]*A[i][i] - A[i][j]*A[k][i];
+            b[k] = b[k]*A[i][i] - b[i]*A[k][i];
+            A[k][i] = 0.0;
         }
     }
-
-    /* Resolve o sistema */
 }
 
 /*  > Para cada linha  do pivô, dividir todos os  coeficientes pelo pivô  (que fica com o valor 1)
@@ -299,29 +303,29 @@ void classicEliminationWithoutPivot(double **A, double *b, unsigned int n)
 void alternativeFormOfElimination(double **A, double *b, unsigned int n)
 {
     /* Inicia na primeira linha e primeira coluna */
-    for(int l = 0; l <n ; l++)
+    for(int i = 0; i < n ; ++i)
     {    
-        double pivo = A[l][l];
+        double pivo = A[i][i];
 
         /* Divide cada elemento da linha do pivô, pelo pivô */
-        for(int i = 0; i < n; i++)
-            A[l][i] = A[l][i] / pivo;
-        b[l] = b[l] / pivo;   
+        for(int l = 0; l < n; ++l)
+            A[i][l] = A[i][l] / pivo;
+        b[i] = b[i] / pivo;   
         
         /* Vai para a próxima linha */
-        for(int i = l+1; i < n; i++)
+        for(int k = i+1; k < n; ++k)
         {
             /* Calcula o multiplicador */
-            double m = A[i][l] / A[l][l];
+            double m = A[k][i] / A[i][i];
             
             /* Para garantir que o elemento será zero */
-            A[i][l] = 0.0;
+            A[k][i] = 0.0;
 
             /* Subtrai de cada elemento da equação a multiplicação
              * desde elemento com o multiplicador calculado */
-            for(int j = l+1; j < n; j++)
-                A[i][j] = A[i][j] - m*A[l][j];
-            b[i] = b[i] - m*b[l];
+            for(int j = i+1; j < n; ++j)
+                A[k][j] = A[k][j] - m*A[i][j];
+            b[k] = b[k] - m*b[i];
         }
     } 
 }
