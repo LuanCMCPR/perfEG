@@ -1,87 +1,95 @@
+#include<time.h>
+#include<sys/time.h>
 #include<stdio.h>
 #include<stdlib.h>
-#include<time.h>
+#include<likwid.h>
+#include<likwid-marker.h>
 #include"libAux.h"
+#define MAX_METHODS 3
+
 
 int main()
 {
-    FILE *fp;
-    clock_t s, e;
     int n;
-    double **A;
-    double *b, *x, *r;
-    
-    // printf("Digite a ordem da matriz: ");
-    scanf("%d", &n);
+    double **A, **CA, *b, *cb, *x, *r, diff;
 
-    /* Aloca a matriz */
+    /* Lê a ordem da matriz */
+    if(scanf("%d", &n) != 1)
+    {
+        printf("Erro ao ler a ordem da matriz!\n");
+        exit(1);
+    }
+
+    /* Cria a matriz A e aloca os vetores b, r, x */    
     A = createMatrix(n);
-    /* Aloca o vetor b */
+    CA = createMatrix(n);
+
     b = (double*) malloc(n*sizeof(double));
-    /* Aloca o vetor x */
+    cb = (double*) malloc(n*sizeof(double));
     x = (double*) malloc(n*sizeof(double));
-    /* Aloca o vetor r */
     r = (double*) malloc(n*sizeof(double));
 
+    /* Lê a matriz original */
+    readLinearSystem(n, A, CA, b, cb);
 
-    // printf("Digite os elementos da matriz: \n");   
-    /* Lê a matriz */
-    readLinearSystem(n, A, b);
+    LIKWID_MARKER_INIT;
+    for (int i = 1; i <= MAX_METHODS; i++) 
+    {
+        diff = timestamp();
+        switch (i) 
+        {
+            case 1:
+                printf("\nFORMA CLÁSSICA COM PIVO\n");
+                classicEliminationWithPivot(A, b, n);
+                break;
+            case 2:
+                printf("\nFORMA CLÁSSICA COM PIVO E SEM MULTIPLICADOR\n");
+                classicEliminationWithoutMult(A, b, n);
+                break;  
+            case 3:
+                printf("\nFORMA ALTERNATIVA DE ELIMINAÇÃO\n");
+                alternativeFormOfElimination(A, b, n);
+                break;
+        }
 
-    printf("\nSistema linear Digitado: \n");
-    /* Imprime o sistema linear */
-    printLinearSystem(n, A, b);
+        /* Resolve o sistema triangular superior */
+        retroSubstitution(A, b, x, n);
 
+        /* Marca o fim da temporização, calcula a diferença e imprime o tempo de execução. */
+        diff = timestamp() - diff;
+        printf("Tempo de execução: %lf ms\n", diff);
 
-    /***** Forma clássica com pivo *****/
-    // printf("\nForma clássica com pivo: \n");
-    // classicEliminationWithPivot(A, b, n);
-    // /* Resolve o sistema triangular superior */
-    // retroSubstituion(A, b, x, n);
-    // /* Imprime o vetor solução */
-    // printf("Solução: \n");
-    // printVector(n, x);
-    // /* Calcula o vetor residual */
-    // printf("Resíduo: \n");
-    // residualVector(A, b, x, r, n);
-    // /* Imprime o vetor residual */
-    // printVector(n, r);
+        /* Imprime o vetor solução */
+        printf("Solução: \n");
+        printVector(n, x);
 
+        /* Calcula o vetor residual */
+        printf("Resíduo: \n");
+        residualVector(A, b, x, r, n);
+        printVector(n, r);
 
+        /* Copia o sistema linear novamente */
+        copyMatrix(CA, A, n);
+        copyVector(cb, b, n);
+
+        /* Zera vetores solução e residuo */
+        for(int i = 0; i < n; i++)
+        {
+            x[i] = 0.00;
+            r[i] = 0.00;
+        }
+
+    }
     
-    /***** Forma clássica com pivo e sem multiplicador *****/
-    // printf("\nForma clássica com pivo e sem multiplicador: \n");
-    // classicEliminationWithoutMult(A, b, n);
-    // /* Resolve o sistema triangular superior */
-    // retroSubstituion(A, b, x, n);
-    // /* Imprime o vetor solução */
-    // printf("Solução: \n");
-    // printVector(n, x);
-    // /* Calcula o vetor residual */
-    // printf("Resíduo: \n");
-    // residualVector(A, b, x, r, n);
-    // /* Imprime o vetor residual */
-    // printVector(n, r);
-
-
-
-    /***** Forma alternativa *****/
-    printf("\nForma alternativa de eliminação: \n");
-    alternativeFormOfElimination(A, b, n);
-    /* Resolve o sistema triangular superior */
-    retroSubstituion(A, b, x, n);
-    /* Imprime o vetor solução */
-    printf("Solução: \n");
-    printVector(n, x);
-    /* Calcula o vetor residual */
-    printf("Resíduo: \n");
-    residualVector(A, b, x, r, n);
-    /* Imprime o vetor residual */
-    printVector(n, r);
-
+    /* Liberar memória alocada */
     free(x);
+    free(cb);
     free(b);
     free(r);
+    destroyMatrix(CA, n);
+    destroyMatrix(A, n);
+
+    LIKWID_MARKER_CLOSE;
 
     return 0;
 

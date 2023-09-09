@@ -1,17 +1,35 @@
+#include<time.h>
+#include<sys/time.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<likwid.h>
+#include<likwid-marker.h>
 #include"libAux.h"
 
+
+/* 
+    Função que retorna tempo em milisegundos desde EPOCH
+*/
+double timestamp()
+{
+  struct timespec tp;
+
+  clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
+
+  return ( (double) tp.tv_sec*1.0e3 + (double) tp.tv_nsec*1.0e-6 );
+}
+
+
 /*
-Função que aloca um matriz
-Parametros:
-    n: Ordem da matriz
- */
+    Função que aloca um matriz
+    Parametros:
+        n: Ordem da matriz
+*/
 double **createMatrix(int n)
 {
     double **M;
 
-    /* Alocas as colunas */
+    /* Aloca as colunas */
     M = (double**) malloc(n*sizeof(double*));
     /* Verificar se memória foi alocada */
     if(M == NULL)
@@ -36,44 +54,40 @@ double **createMatrix(int n)
 }
 
 /*
-Função para liberar memória alocada para um sistema linear
-Parametros:
-    SL: Sistema linear
+    Função que libera a memória alocada para uma matriz
+    Parametros:
+        M: Matriz
+        n: Ordem da matriz
 */
-double destroyLinearSystem(SL_t *SL)
+double **destroyMatrix(double **M, int n)
 {
     /* Libera as linhas */
-    for(int i = 0; i < SL->n; i++)
-        free(SL->A[i]);
+    for(int i = 0; i < n; i++)
+        free(M[i]);
     /* Libera as colunas */
-    free(SL->A);
-    /* Libera o vetor b */
-    free(SL->b);
-    /* Libera o vetor x */
-    free(SL->x);
-    /* Libera o sistema linear */
-    free(SL);
+    free(M);
+    return NULL;
 }
 
 /*
-Função que lê os elementos de uma matriz
-Parametros: 
-    n: Ordem da matriz
-    A: Matriz
+    Função que copia uma matriz para outra
+    Paramentros:
+        original: Matriz original
+        copy: Matriz cópia
+        n: Ordem da matriz
 */
-void readMatrix(int n, double **A)
+void copyMatrix(double **original, double **copy, unsigned int n)
 {
-
     for(int i = 0; i < n; i++)
         for(int j = 0; j < n; j++)
-            scanf("%lf", &A[i][j]);
+            copy[i][j] = original[i][j];
 }
 
 /*
-Função que imprime os elementos de uma matriz
-Paramentros:
-    n: Ordem da matriz
-    A: Matriz
+    Função que imprime os elementos de uma matriz
+    Paramentros:
+        n: Ordem da matriz
+        A: Matriz
 */
 void printMatrix(int n, double **A)
 {
@@ -87,26 +101,38 @@ void printMatrix(int n, double **A)
 }
 
 /*
-Função que lê os elementos de uma matriz e do vetor de termos independentes
-Parametros: 
-    n: Ordem da matriz
-    A: Matriz
+    Função que lê os elementos de uma matriz e do vetor de termos independentes
+    Parametros: 
+        n: Ordem da matriz
+        A: Matriz
 */
-void readLinearSystem(int n, double **A, double *b)
+void readLinearSystem(int n, double **A, double **Copy, double *b, double *cb)
 {
     for(int i = 0; i < n; i++)
     {
         for(int j = 0; j < n; j++)
-            scanf("%lf", &A[i][j]);
-        scanf("%lf", &b[i]);
+        {
+            if(scanf("%lf", &A[i][j]) != 1)
+            {
+                printf("Erro ao ler a matriz!\n");
+                exit(1);
+            }
+            Copy[i][j] = A[i][j];
+        }
+        if(scanf("%lf", &b[i]) != 1)
+        {
+            printf("Erro ao ler o vetor de termos independentes!\n");
+            exit(1);
+        }
+        cb[i] = b[i];
     }
 }
 
 /*
-Função que imprime os elementos de uma matriz e do vetor de termos independentes
-Parametros: 
-    n: Ordem da matriz
-    A: Matriz
+    Função que imprime os elementos de uma matriz e do vetor de termos independentes
+    Parametros: 
+        n: Ordem da matriz
+        A: Matriz
 */
 void printLinearSystem(int n, double **A, double *b)
 {
@@ -121,10 +147,22 @@ void printLinearSystem(int n, double **A, double *b)
 }
 
 /*
-Função que imprime os elementos de um vetor
-Parametros: 
-    n: Ordem da matriz
-    x: Vetor
+    Função que copia um vetor
+    Parametros:
+        original: Vetor original
+        n: Ordem do vetor
+*/
+void copyVector(double *original, double*copy, unsigned int n)
+{
+    for(int i = 0; i < n; i++)
+        copy[i] = original[i];
+}
+
+/*
+    Função que imprime os elementos de um vetor
+    Parametros: 
+        n: Ordem da matriz
+        x: Vetor a ser impresso
 */
 void printVector(int n, double *x)
 {
@@ -137,19 +175,20 @@ void printVector(int n, double *x)
     printf("]\n");
 }
 
-
+/*
+    Função que faz o cálculo do vetor residual
+    Parametros:
+        A: Matriz de coeficientes
+        b: Vetor de valores independentes
+        x: Vetor solução
+        r: Vetor residual
+        n: Ordem da matriz
+*/
 void residualVector(double **A, double *b, double *x, double *r, unsigned int n)
 {
-    /* Calcula o vetor residual */
-    // for(int i = 0; i < n; i++)
-    // {
-    //     r[i] = b[i];
-    //     for(int j = 0; j < n; j++)
-    //         r[i] = r[i] - A[i][j]*x[j];
-    // }
-    double soma = 0.00;
     for(int i = 0; i < n; i++)
     {
+        double soma = 0.00; 
         for(int j = 0; j < n; j++)
             soma = soma + A[i][j]*x[j];
         soma = soma - b[i];
@@ -159,17 +198,18 @@ void residualVector(double **A, double *b, double *x, double *r, unsigned int n)
 
 
 /*
-Função que resolve sistemas triangulares superiores
-Parametros:
-    A: Matriz
-    b: Vetor de termos independentes
-    x: Vetor solução
-    n: Ordem da matriz
+    Função que resolve sistemas triangulares superiores
+    Parametros:
+        A: Matriz
+        b: Vetor de termos independentes
+        x: Vetor solução
+        n: Ordem da matriz
 */
-void retroSubstituion(double **A, double *b, double *x, unsigned int n)
+void retroSubstitution(double **A, double *b, double *x, unsigned int n)
 {
     /* Começa na última linha */
-    for(int i = n-1; i >= 0; i--)
+    LIKWID_MARKER_START("retroSubstitution");      
+    for(int i = n-1; i >= 0; --i)
     {
         /* Atribui o valor da solução*/
         x[i] = b[i];
@@ -180,17 +220,21 @@ void retroSubstituion(double **A, double *b, double *x, unsigned int n)
             x[i] = x[i] - A[i][j]*x[j];
 
         /* Divide pelo coeficiente*/
-        x[i] = x[i] / A[i][i];
+        if( A[i][i] != 0.0)
+            x[i] = x[i] / A[i][i];
+        else
+            x[i] = 0.0;
     }
+    LIKWID_MARKER_STOP("retroSubstitution");
 }
 
 /*
-Função que faz a troca de duas linhas de um sistema linear
-Parametros:
-    A: Matriz
-    b: Vetor de termos independentes
-    l1: Linha 1
-    l2: Linha 2
+    Função que faz a troca de duas linhas de um sistema linear
+    Parametros:
+        A: Matriz
+        b: Vetor de termos independentes
+        l1: Linha 1
+        l2: Linha 2
 */
 void swapLines(double **A, double *b, unsigned int l1, unsigned int l2)
 {
@@ -206,10 +250,10 @@ void swapLines(double **A, double *b, unsigned int l1, unsigned int l2)
 }
 
 /*
-Função que encontrará o maior elemento do sistema linear
-Parametros:
-    A: Matriz
-    l: Linha atual
+    Função que encontrará o maior elemento do sistema linear
+    Parametros:
+        A: Matriz
+        l: Linha atual
 */
 unsigned int findMax(double **A, unsigned int l, unsigned int n)
 {
@@ -234,11 +278,11 @@ unsigned int findMax(double **A, unsigned int l, unsigned int n)
 }
 
 /*
-Função que aplica a Eliminação-Gaussiana com pivoteamento parcial
-Parametros:
-    A: Matriz
-    b: Vetor de termos independentes
-    n: Ordem da matriz
+    Função que aplica a Eliminação-Gaussiana com pivoteamento parcial
+    Parametros:
+        A: Matriz
+        b: Vetor de termos independentes
+        n: Ordem da matriz
 */ 
 void classicEliminationWithPivot(double **A, double *b, unsigned int n)
 {
@@ -249,7 +293,21 @@ void classicEliminationWithPivot(double **A, double *b, unsigned int n)
         unsigned int iPivot = findMax(A,i,n);
         if( i != iPivot )
             swapLines(A,b,i,iPivot);
+
+        if( A[i][i] == 0.0 )
+        {   
+            int j = i+1;
+            while( A[j][i] == 0.0 && j < n-1 )
+                j++;
+            if( j == n-1 )
+            {
+                printf("Coluna com todos coeficientes igual a zero\n");
+                exit(1);
+            }
+            swapLines(A,b,i,j);
+        }
         
+        LIKWID_MARKER_START("classicEliminationWithPivot");
         /* Vai para a próxima linha */
         for(int k = i+1; k < n; k++)
         {
@@ -262,37 +320,55 @@ void classicEliminationWithPivot(double **A, double *b, unsigned int n)
             /* Subtrai de cada elemento da equação a multiplicação
              * desde elemento com o multiplicador calculado */
             for(int j = i+1; j < n; ++j)
-                A[k][j] = A[k][j] - m*A[i][j];
+                A[k][j] = A[k][j] - (m * A[i][j]);
             b[k] = b[k] - m*b[i];
         }
+        LIKWID_MARKER_STOP("classicEliminationWithPivot");
     }
 }
 
 /*
-Função que aplica a Eliminação-Gaussiana sem pivoteamento parcial
-Parametros:
-    A: Matriz
-    b: Vetor de termos independentes
-    n: Ordem da matriz
+    Função que aplica a Eliminação-Gaussiana sem pivoteamento parcial
+    Parametros:
+        A: Matriz
+        b: Vetor de termos independentes
+        n: Ordem da matriz
 */
 void classicEliminationWithoutMult(double **A, double *b, unsigned int n)
 {
     /* Inicia na primeira linha e primeira coluna */
     for(int i = 0; i < n ; ++i)
     {
-         /* Pivoteamento parcial */
-        // unsigned int iPivot = findMax(A,i,n);
-        // if( i != iPivot )
-            // swapLines(A,b,i,iPivot);
+        LIKWID_MARKER_START("classicEliminationWithPivotWithoutMult");
+        /* Pivoteamento parcial */
+
+        unsigned int iPivot = findMax(A,i,n);
+        if( i != iPivot )
+            swapLines(A,b,i,iPivot);
+
+        if( A[i][i] == 0.0 )
+        {   
+            int j = i+1;
+            while( A[j][i] == 0.0 && j < n-1 )
+                j++;
+            if( j == n-1 )
+            {
+                printf("Coluna com todos coeficientes igual a zero\n");
+                exit(1);
+            }
+            swapLines(A,b,i,j);
+        }
         
         /* Vai para a próxima linha */
         for(int k = i+1; k < n; ++k)
         {
             for(int j = i+1; j < n; ++j)
                 A[k][j] = A[k][j]*A[i][i] - A[i][j]*A[k][i];
+                
             b[k] = b[k]*A[i][i] - b[i]*A[k][i];
             A[k][i] = 0.0;
         }
+        LIKWID_MARKER_STOP("classicEliminationWithPivotWithoutMult");
     }
 }
 
@@ -300,12 +376,33 @@ void classicEliminationWithoutMult(double **A, double *b, unsigned int n)
     > Proceder com  a eliminação,  zerando a coluna  do pivô,  sem fazer pivoteamento.
     > Completada   a  triangularização,   calcular  as   incógnitas  por retro-substituição.
 */
+/*
+    Função que aplica a forma alternativa de eliminação
+    Parametros:
+        A: Matriz
+        b: Vetor de termos independentes
+        n: Ordem da matriz
+*/
 void alternativeFormOfElimination(double **A, double *b, unsigned int n)
 {
+    LIKWID_MARKER_START("alternativeFormOfElimination");
     /* Inicia na primeira linha e primeira coluna */
     for(int i = 0; i < n ; ++i)
     {    
         double pivo = A[i][i];
+        if( pivo == 0.0 )
+        {
+            int j = i+1;
+            while( A[j][i] == 0.0 && j < n-1 )
+                j++;
+            if( j == n-1 )
+            {
+                printf("Coluna com todos coeficientes igual a zero\n");
+                exit(1);
+            }
+            swapLines(A,b,i,j);
+            pivo = A[i][i];
+        }
 
         /* Divide cada elemento da linha do pivô, pelo pivô */
         for(int l = 0; l < n; ++l)
@@ -328,5 +425,6 @@ void alternativeFormOfElimination(double **A, double *b, unsigned int n)
             b[k] = b[k] - m*b[i];
         }
     } 
+    LIKWID_MARKER_STOP("alternativeFormOfElimination");
 }
 
